@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Análisis de Sentimiento y Polaridad (IA)</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* CRUCIAL: Aplicar box-sizing globalmente para evitar que el padding desborde el ancho */
+        *, *::before, *::after {
+            box-sizing: border-box; 
+        }
+
+        /* Variables CSS para colores (Estilo Nord Dark) */
+        :root {
+            --bg-color: #2e3440; /* Fondo principal oscuro */
+            --primary-color: #5e81ac; /* Azul principal (para botones) */
+            --text-color: #eceff4; /* Texto claro */
+            --accent-color: #a3be8c; /* Verde para Positivo */
+            --danger-color: #bf616a; /* Rojo para Negativo */
+            --neutral-color: #ebcb8b; /* Amarillo para Neutral */
+            --card-bg: #3b4252; /* Fondo de tarjetas/navbar */
+            --input-bg: #4c566a; /* Fondo del input de búsqueda */
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.5s ease-in-out;
+        }
+
+        /* Barra de Navegación Superior */
+        .navbar {
+            width: 100%;
+            background-color: var(--card-bg);
+            padding: 15px 40px; /* Padding original para desktop */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            color: var(--text-color);
+            font-size: 1.5em;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .navbar-brand .material-icons {
+            margin-right: 10px;
+            font-size: 1.8em;
+            color: var(--accent-color);
+        }
+        .navbar-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            margin-left: 30px;
+            font-size: 1.1em;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .navbar-links a:hover {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+        .navbar-toggle {
+            display: none;
+            font-size: 1.8em;
+            cursor: pointer;
+        }
+
+        /* Contenido Principal (se centra verticalmente si no hay resultado) */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+            max-width: 900px;
+            margin-top: 80px;
+            transition: all 0.5s ease-in-out;
+        }
+
+        /* Desplazamiento hacia arriba al tener resultado */
+        .main-content.has-result {
+            justify-content: flex-start;
+            padding-top: 20px;
+        }
+
+        h2.section-title {
+            color: var(--text-color);
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        /* Formulario de Búsqueda */
+        .search-form-container {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+        .search-input-group {
+            display: flex;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        textarea.search-input {
+            flex-grow: 1;
+            padding: 18px 25px;
+            border: none;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 1.2em;
+            resize: none;
+            min-height: 55px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        textarea.search-input::placeholder {
+            color: rgba(236, 239, 244, 0.6); 
+        }
+        button.search-button {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        button.search-button .material-icons {
+            font-size: 1.8em;
+        }
+        button.search-button:hover {
+            background-color: var(--primary-color);
+            filter: brightness(1.1);
+        }
+        
+        /* Sección de Resultados */
+        .results-section {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+        .main-content.has-result .results-section {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h3.results-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 25px;
+        }
+        .result-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .result-card p {
+            margin: 0;
+            font-size: 1.1em;
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+        .result-label {
+            align-self: flex-start;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.3em;
+            color: var(--text-color);
+            margin-top: 15px;
+        }
+
+        /* Colores Específicos para Etiquetas */
+        .label-Positivo { background-color: var(--accent-color); }
+        .label-Negativo { background-color: var(--danger-color); }
+        .label-Neutral { background-color: var(--neutral-color); color: var(--card-bg); }
+
+        .model-info {
+            font-size: 0.85em;
+            color: rgba(236, 239, 244, 0.7);
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(236, 239, 244, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        /* Responsive Design: CORRECCIÓN DEL DESBORDAMIENTO */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 15px 15px; /* Reducido de 40px a 15px para pantallas pequeñas */
+            }
+            .navbar-links {
+                display: none;
+            }
+            .navbar-toggle {
+                display: block;
+            }
+            h2.section-title {
+                font-size: 2em;
+            }
+            .search-input-group {
+                border-radius: 8px;
+            }
+            textarea.search-input {
+                font-size: 1em;
+                padding: 15px;
+            }
+            button.search-button {
+                padding: 10px 15px;
+            }
+            .result-label {
+                font-size: 1.1em;
+                padding: 6px 12px;
+            }
+            .result-card p {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="#" class="navbar-brand">
+            <span class="material-icons">home</span>
+            Analizador Sentimiento
+        </a>
+        <div class="navbar-links">
+            <a href="#">Inicio</a>
+            <a href="#">Acerca de</a>
+            <a href="#">Contacto</a>
+        </div>
+        <span class="material-icons navbar-toggle">menu</span>
+    </nav>
+
+    {% if result %}
+        {% set main_content_class = 'main-content has-result' %}
+    {% else %}
+        {% set main_content_class = 'main-content' %}
+    {% endif %}
+
+    <div class="{{ main_content_class }}">
+        <h2 class="section-title">Analizador de Sentimiento y Polaridad</h2>
+        
+        <div class="search-form-container">
+            <form method="POST" class="search-input-group">
+                <textarea name="tweet_text" class="search-input" placeholder="Escribe tu texto aquí para clasificar el sentimiento..." rows="2">{{ original_text }}</textarea>
+                <button type="submit" class="search-button">
+                    <span class="material-icons">search</span>
+                </button>
+            </form>
+        </div>
+
+        {% if result %}
+            {% set tono = result.split(': ')[1] %}
+            <div class="results-section">
+                <h3 class="results-title">RESULTADO DETECTADO:</h3>
+                <div class="result-card">
+                    <p>Texto original: <strong>"{{ original_text }}"</strong></p>
+                    <span class="result-label label-{{ tono }}">{{ tono }}</span>
+                </div>
+            </div>
+        {% endif %}
+
+        <p class="model-info">Modelo entrenado con Regresión Logística y Scikit-learn, servido con Flask.</p>
+    </div>
+
+</body>
+</html>

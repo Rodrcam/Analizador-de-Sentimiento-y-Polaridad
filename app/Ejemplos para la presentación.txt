@@ -1,0 +1,6 @@
+Tono, Frase para Clasificar (Input),Resultado Esperado, Razón de la Predicción (para tu explicación)
+POSITIVO, "Un aplauso para la organización, todo salió perfecto. Un 10."
+NEGATIVO, "Qué vergüenza de arbitraje, no tienen ni idea, es un desastre total."
+NEUTRAL, "El congreso se celebrará los días 15 y 16 de mayo en el centro de la ciudad."
+POSITIVO, "El nuevo disco es una obra maestra. ¡Brutal! Qué gran trabajo."
+NEUTRAL, "El autobús llegó con 15 minutos de retraso esta mañana, pero el tráfico está fluido."
