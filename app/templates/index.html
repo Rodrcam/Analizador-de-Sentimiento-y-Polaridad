@@ -20,6 +20,7 @@
             --neutral-color: #ebcb8b; /* Amarillo para Neutral */
             --card-bg: #3b4252; /* Fondo de tarjetas/navbar */
             --input-bg: #4c566a; /* Fondo del input de búsqueda */
+            --search-result-bg: #4c566a; /* Fondo de tweets encontrados */
         }
 
         body {
@@ -40,7 +41,7 @@
         .navbar {
             width: 100%;
             background-color: var(--card-bg);
-            padding: 15px 40px; /* Padding original para desktop */
+            padding: 15px 40px; 
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -80,24 +81,19 @@
             cursor: pointer;
         }
 
-        /* Contenido Principal (se centra verticalmente si no hay resultado) */
+        /* Contenido Principal */
         .main-content {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            /* Se alinea arriba por defecto ahora que hay dos secciones */
+            justify-content: flex-start; 
             align-items: center;
             padding: 20px;
             width: 100%;
             max-width: 900px;
             margin-top: 80px;
             transition: all 0.5s ease-in-out;
-        }
-
-        /* Desplazamiento hacia arriba al tener resultado */
-        .main-content.has-result {
-            justify-content: flex-start;
-            padding-top: 20px;
         }
 
         h2.section-title {
@@ -107,19 +103,24 @@
             text-align: center;
         }
         
-        /* Formulario de Búsqueda */
-        .search-form-container {
+        /* Contenedores de Formulario y Resultado */
+        .section-container {
             width: 100%;
             max-width: 600px;
             margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--input-bg);
         }
+
+        /* Formulario de Búsqueda y Clasificación */
         .search-input-group {
             display: flex;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-top: 15px; /* Separación después del título h3 */
         }
-        textarea.search-input {
+        textarea.search-input, input.search-input {
             flex-grow: 1;
             padding: 18px 25px;
             border: none;
@@ -131,7 +132,7 @@
             box-sizing: border-box;
             outline: none;
         }
-        textarea.search-input::placeholder {
+        textarea.search-input::placeholder, input.search-input::placeholder {
             color: rgba(236, 239, 244, 0.6); 
         }
         button.search-button {
@@ -154,18 +155,10 @@
             filter: brightness(1.1);
         }
         
-        /* Sección de Resultados */
+        /* Resultados de Sentimiento */
         .results-section {
             width: 100%;
-            max-width: 600px;
             margin-top: 30px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-        }
-        .main-content.has-result .results-section {
-            opacity: 1;
-            transform: translateY(0);
         }
 
         h3.results-title {
@@ -203,6 +196,28 @@
         .label-Negativo { background-color: var(--danger-color); }
         .label-Neutral { background-color: var(--neutral-color); color: var(--card-bg); }
 
+        /* Estilos del Buscador de Tweets */
+        .search-results-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .tweet-item {
+            background-color: var(--search-result-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 1em;
+            line-height: 1.4;
+            color: var(--text-color);
+            border-left: 5px solid var(--primary-color);
+        }
+        .search-results-info {
+            font-size: 1.1em;
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+
         .model-info {
             font-size: 0.85em;
             color: rgba(236, 239, 244, 0.7);
@@ -217,7 +232,7 @@
         /* Responsive Design: CORRECCIÓN DEL DESBORDAMIENTO */
         @media (max-width: 768px) {
             .navbar {
-                padding: 15px 15px; /* Reducido de 40px a 15px para pantallas pequeñas */
+                padding: 15px 15px; 
             }
             .navbar-links {
                 display: none;
@@ -231,7 +246,7 @@
             .search-input-group {
                 border-radius: 8px;
             }
-            textarea.search-input {
+            textarea.search-input, input.search-input {
                 font-size: 1em;
                 padding: 15px;
             }
@@ -252,45 +267,74 @@
 
     <nav class="navbar">
         <a href="#" class="navbar-brand">
-            <span class="material-icons">home</span>
+            <span class="material-icons">data_usage</span>
             Analizador Sentimiento
         </a>
         <div class="navbar-links">
-            <a href="#">Inicio</a>
-            <a href="#">Acerca de</a>
+            <a href="#sentiment-section">Sentimiento</a>
+            <a href="#search-section">Buscador</a>
             <a href="#">Contacto</a>
         </div>
         <span class="material-icons navbar-toggle">menu</span>
     </nav>
 
-    {% if result %}
+    {% if result or search_results is not none %}
         {% set main_content_class = 'main-content has-result' %}
     {% else %}
         {% set main_content_class = 'main-content' %}
     {% endif %}
 
     <div class="{{ main_content_class }}">
-        <h2 class="section-title">Analizador de Sentimiento y Polaridad</h2>
+        <h2 class="section-title">Análisis de Sentimiento y Búsqueda de Texto</h2>
         
-        <div class="search-form-container">
-            <form method="POST" class="search-input-group">
+        <!-- SECCIÓN 1: CLASIFICADOR DE SENTIMIENTO -->
+        <div id="sentiment-section" class="section-container">
+            <h3>Clasificador de Sentimiento</h3>
+            <form method="POST" action="/" class="search-input-group">
                 <textarea name="tweet_text" class="search-input" placeholder="Escribe tu texto aquí para clasificar el sentimiento..." rows="2">{{ original_text }}</textarea>
+                <button type="submit" class="search-button">
+                    <span class="material-icons">sentiment_very_satisfied</span>
+                </button>
+            </form>
+
+            {% if result %}
+                {% set tono = result.split(': ')[1] %}
+                <div class="results-section">
+                    <h3 class="results-title">RESULTADO DE CLASIFICACIÓN:</h3>
+                    <div class="result-card">
+                        <p>Texto original: <strong>"{{ original_text }}"</strong></p>
+                        <span class="result-label label-{{ tono }}">{{ tono }}</span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- SECCIÓN 2: BUSCADOR DE TWEETS -->
+        <div id="search-section" class="section-container">
+            <h3>Buscador de Tweets (Base de Datos)</h3>
+            <form method="POST" action="/search_tweets" class="search-input-group">
+                <input type="text" name="search_query" class="search-input" placeholder="Escribe una palabra o frase para buscar en el corpus etiquetado..." value="{{ search_query if search_query else '' }}">
                 <button type="submit" class="search-button">
                     <span class="material-icons">search</span>
                 </button>
             </form>
-        </div>
 
-        {% if result %}
-            {% set tono = result.split(': ')[1] %}
-            <div class="results-section">
-                <h3 class="results-title">RESULTADO DETECTADO:</h3>
-                <div class="result-card">
-                    <p>Texto original: <strong>"{{ original_text }}"</strong></p>
-                    <span class="result-label label-{{ tono }}">{{ tono }}</span>
+            {% if search_results is not none %}
+                <div class="results-section">
+                    <h3 class="results-title">RESULTADOS DE BÚSQUEDA:</h3>
+                    {% if search_results|length > 0 %}
+                        <p class="search-results-info">Se encontraron **{{ search_results|length }}** resultados para "**{{ search_query }}**":</p>
+                        <ul class="search-results-list">
+                            {% for tweet in search_results %}
+                                <li class="tweet-item">{{ tweet }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="search-results-info">No se encontraron resultados para "**{{ search_query }}**".</p>
+                    {% endif %}
                 </div>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
 
         <p class="model-info">Modelo entrenado con Regresión Logística y Scikit-learn, servido con Flask.</p>
     </div>
