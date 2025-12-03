@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta
 
 # --- ⚠️ CONFIGURACIÓN (Asegúrate de que el BEARER_TOKEN es correcto) ⚠️ ---
-BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAKX85gEAAAAAjBUT8QU6%2Ft2oGy%2FkadhKMBatEwc%3DRXcDZLe4gR9pTPe5nUPt5sqEc6zOxSuz5y6O0gbMWXHf4KsAdL"
+BEARER_TOKEN = "TU BEARER_TOKEN"
 # ---------------------------------------------------------------------
 
 INPUT_FILENAME = 'tweets_raw_ES.json'
